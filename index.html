@@ -6,6 +6,7 @@
     <title>Kalkulator Anuitas</title>
     <link rel="stylesheet" href="style.css">
     <!-- Library SheetJS untuk Ekspor ke Excel (.xlsx) -->
+    <script src="https://sheetjs.com"></script>
 </head>
 <body>
 
@@ -84,7 +85,7 @@
         <div id="statusEkspor" class="error-msg"></div>
     </div>
 
-        <script>
+    <script>
         let dataTerakhir = [];
 
         function formatRupiah(angka, denganTitik = false) {
