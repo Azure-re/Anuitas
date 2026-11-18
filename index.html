@@ -6,7 +6,6 @@
     <title>Kalkulator Anuitas</title>
     <link rel="stylesheet" href="style.css">
     <!-- Library SheetJS untuk Ekspor ke Excel (.xlsx) -->
-    <script src="https://sheetjs.com"></script>
 </head>
 <body>
 
@@ -79,6 +78,164 @@
         </table>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Ekspor Excel -->
+    <div class="export-section">
+        <button class="primary" onclick="eksporClicked()">Ekspor ke Excel</button>
+        <div id="statusEkspor" class="error-msg"></div>
+    </div>
+
+        <script>
+        let dataTerakhir = [];
+
+        function formatRupiah(angka, denganTitik = false) {
+            const prefix = denganTitik ? "Rp." : "Rp";
+            return prefix + angka.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function hitungAnuitas(P, i, n) {
+            const bunga = i / 100;
+            let utang = P;
+            const data = [];
+            let A = i === 0 ? P / n : P * (bunga / (1 - Math.pow(1 + bunga, -n)));
+
+            for (let periode = 1; periode <= n; periode++) {
+                const utangAwal = utang;
+                let bungaT = i === 0 ? 0 : utang * bunga;
+                let angsuran = i === 0 ? A : A - bungaT;
+                utang = utang - angsuran;
+
+                data.push({
+                    periode: periode,
+                    utangAwal: utangAwal,
+                    angsuran: angsuran,
+                    bunga: bungaT,
+                    anuitas: A,
+                    sisaUtang: Math.abs(utang) < 1e-9 ? 0 : utang
+                });
+            }
+            return { A, data };
+        }
+
+        function resetClicked() {
+            ["nilaiP", "nilaiI", "nilaiN"].forEach(id => document.getElementById(id).value = "");
+            ["hasilAnuitas", "ringkasanPinjaman", "ringkasanBunga", "ringkasanTotal", "persentaseBunga", "pesanError", "statusEkspor"]
+                .forEach(id => document.getElementById(id).textContent = "");
+            document.getElementById("tabelBody").innerHTML = "";
+            dataTerakhir = [];
+        }
+
+        function hitungClicked() {
+            const rawP = document.getElementById("nilaiP").value.trim();
+            const rawI = document.getElementById("nilaiI").value.trim();
+            const rawN = document.getElementById("nilaiN").value.trim();
+
+            const P = Number(rawP);
+            const i = Number(rawI);
+            const nFloat = Number(rawN);
+
+            if (!rawP || !rawI || !rawN || isNaN(P) || isNaN(i) || isNaN(nFloat)) {
+                resetClicked();
+                document.getElementById("pesanError").textContent = "Masukkan input yang valid!";
+                return;
+            }
+
+            if (P <= 0 || i < 0 || !Number.isInteger(nFloat) || nFloat <= 0) {
+                document.getElementById("pesanError").textContent = "Masukkan angka yang benar";
+                document.getElementById("hasilAnuitas").textContent = "";
+                return;
+            }
+
+            document.getElementById("pesanError").textContent = "";
+            document.getElementById("statusEkspor").textContent = "";
+
+            const n = Math.trunc(nFloat);
+            const { A, data } = hitungAnuitas(P, i, n);
+            dataTerakhir = data;
+
+            const totalBunga = data.reduce((sum, item) => sum + item.bunga, 0);
+            const totalPembayaran = data.reduce((sum, item) => sum + item.anuitas, 0);
+
+            document.getElementById("ringkasanPinjaman").textContent = formatRupiah(P, false);
+            document.getElementById("ringkasanBunga").textContent = formatRupiah(totalBunga, false);
+            document.getElementById("ringkasanTotal").textContent = formatRupiah(totalPembayaran, false);
+            document.getElementById("persentaseBunga").textContent = `${i}%`;
+            document.getElementById("hasilAnuitas").textContent = formatRupiah(A, true);
+
+            document.getElementById("tabelBody").innerHTML = data.map(item => `
+                <tr>
+                    <td>${item.periode}</td>
+                    <td>${formatRupiah(item.utangAwal, true)}</td>
+                    <td>${formatRupiah(item.angsuran, true)}</td>
+                    <td>${formatRupiah(item.bunga, true)}</td>
+                    <td>${formatRupiah(item.anuitas, true)}</td>
+                    <td>${formatRupiah(item.sisaUtang, true)}</td>
+                </tr>
+            `).join("");
+        }
+
+        function eksporClicked() {
+            const statusEl = document.getElementById("statusEkspor");
+            statusEl.style.color = "#ef4444";
+
+            if (dataTerakhir.length === 0) {
+                statusEl.textContent = "Hitung anuitas terlebih dahulu!";
+                return;
+            }
+
+            // Membuat tabel HTML khusus Excel (.xls) tanpa library eksternal
+            let htmlExcel = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" 
+                      xmlns:x="urn:schemas-microsoft-com:office:excel" 
+                      xmlns="http://w3.org">
+                <head><meta charset="UTF-8"></head>
+                <body>
+                    <table border="1">
+                        <thead>
+                            <tr style="font-weight:bold; background-color:#eff6ff;">
+                                <th>Periode</th>
+                                <th>Pinjaman Awal</th>
+                                <th>Angsuran Pokok</th>
+                                <th>Bunga</th>
+                                <th>Anuitas</th>
+                                <th>Sisa Utang</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            dataTerakhir.forEach(item => {
+                htmlExcel += `
+                    <tr>
+                        <td>${item.periode}</td>
+                        <td style="mso-number-format:'\\Rp#,##0.00'">${item.utangAwal.toFixed(2)}</td>
+                        <td style="mso-number-format:'\\Rp#,##0.00'">${item.angsuran.toFixed(2)}</td>
+                        <td style="mso-number-format:'\\Rp#,##0.00'">${item.bunga.toFixed(2)}</td>
+                        <td style="mso-number-format:'\\Rp#,##0.00'">${item.anuitas.toFixed(2)}</td>
+                        <td style="mso-number-format:'\\Rp#,##0.00'">${item.sisaUtang.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            htmlExcel += `</tbody></table></body></html>`;
+
+            // Memicu unduhan langsung di browser
+            const blob = new Blob(["\ufeff", htmlExcel], { type: "application/vnd.ms-excel;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "Rincian_Anuitas.xls";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            statusEl.style.color = "#16a34a";
+            statusEl.textContent = "Proses ekspor selesai.";
+        }
+    </script>
+
 </body>
 </html>
