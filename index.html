@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Anuitas</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Library SheetJS untuk Ekspor ke Excel (.xlsx) -->
+    <script src="https://sheetjs.com"></script>
+</head>
+<body>
+
+    <h1>Kalkulator Anuitas</h1>
+    <p class="subtitle">Selamat datang di aplikasi anuitas!</p>
+
+    <!-- Kartu Input -->
+    <div class="card-input">
+        <h2>Data Pinjaman</h2>
+        <div class="form-group">
+            <label for="nilaiP">Jumlah pinjaman</label>
+            <input type="text" id="nilaiP" placeholder="Contoh: 1000000, 300000.3">
+        </div>
+        <div class="form-group">
+            <label for="nilaiI">Besar persentase bunga per periode</label>
+            <input type="text" id="nilaiI" placeholder="Contoh: 10, 1.2, 30.2">
+        </div>
+        <div class="form-group">
+            <label for="nilaiN">Lama periode pembayaran</label>
+            <input type="text" id="nilaiN" placeholder="Contoh: 1, 2, 3">
+        </div>
+        <div class="btn-row">
+            <button class="primary" onclick="hitungClicked()">Hitung anuitas</button>
+            <button onclick="resetClicked()">Reset</button>
+        </div>
+    </div>
+
+    <!-- Ringkasan Keuangan -->
+    <div class="section-title">Ringkasan Keuangan</div>
+    <div id="pesanError" class="error-msg"></div>
+
+    <div class="summary-list">
+        <div class="summary-card bg-blue">
+            <div class="label">Pinjaman Awal</div>
+            <div class="value" id="ringkasanPinjaman"></div>
+        </div>
+        <div class="summary-card bg-orange">
+            <div class="label">Total Bunga</div>
+            <div class="value" id="ringkasanBunga"></div>
+        </div>
+        <div class="summary-card bg-green">
+            <div class="label">Total Pembayaran</div>
+            <div class="value" id="ringkasanTotal"></div>
+        </div>
+        <div class="summary-card bg-red">
+            <div class="label">Nilai Anuitas</div>
+            <div class="value" id="hasilAnuitas"></div>
+        </div>
+        <div class="summary-card bg-grey">
+            <div class="label">Persentase bunga per periode</div>
+            <div class="value" id="persentaseBunga"></div>
+        </div>
+    </div>
+
+    <!-- Rincian Pembayaran -->
+    <div class="section-title">Rincian Pembayaran</div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Periode</th>
+                    <th>Pinjaman Awal</th>
+                    <th>Angsuran</th>
+                    <th>Bunga</th>
+                    <th>Anuitas</th>
+                    <th>Sisa utang</th>
+                </tr>
+            </thead>
+            <tbody id="tabelBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Ekspor Excel -->
+    <div class="export-section">
+        <button class="primary" onclick="eksporClicked()">Ekspor ke Excel</button>
+        <div id="statusEkspor" class="error-msg"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
